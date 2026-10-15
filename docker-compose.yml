@@ -1,31 +1,18 @@
 services:
-  train:
-    build:
-      context: ./train
-      dockerfile: Dockerfile.opt
-    image: iris-train:opt
-    volumes:
-      - iris-models:/models
-
-  serve:
-    build:
-      context: ./serve
-      dockerfile: Dockerfile.opt
-    image: iris-serve:opt
+  api:
+    build: ./api
     ports:
-      - "5001:5000"
-    volumes:
-      - iris-models:/models:ro
+      - "8000:5000"
+    environment:
+      REDIS_HOST: base
     depends_on:
-      train:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      - base
+
+  base:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - donnees:/data
 
 volumes:
-  iris-models:
-    name: iris-models-compose
+  donnees:
